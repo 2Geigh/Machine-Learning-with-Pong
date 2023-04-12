@@ -5,7 +5,12 @@ player_speed_x = 0.75
 player_speed_y = 0.75
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x:int, y:int, speed_x:int, speed_y:int, height:int, width:int, colour:tuple, bounds_horizontal: tuple, bounds_vertical:tuple) -> None:
+    def __init__(self,
+                 x:int, y:int,
+                 speed_x:int, speed_y:int,
+                 height:int, width:int,
+                 colour:tuple,
+                 bounds_horizontal: tuple, bounds_vertical:tuple) -> None:
         super().__init__()
         self.position = (x,y)
         self.speed = (speed_x, speed_y)
@@ -24,7 +29,11 @@ class Player(pygame.sprite.Sprite):
     
     def draw(self, surface) :
         """Draws the player to the surface"""
-        pygame.draw.rect(surface, self.colour, [self.position[0], self.position[1], self.width, self.height])
+        pygame.draw.rect(surface,
+                         self.colour,
+                         [self.position[0],
+                          self.position[1],
+                          self.width, self.height])
         #pygame.draw.rect(window, blue, [player2_initial_left, player2_initial_top, paddle_width, paddle_height], paddle_thickness)
 
     def move_up(self):

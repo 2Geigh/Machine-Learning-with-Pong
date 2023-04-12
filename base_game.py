@@ -73,12 +73,15 @@ def get_ball_initial_speed() -> tuple:
 
 get_ball_initial_speed()
 
-player1 = game_classes.Player(player1_initial_left, player1_initial_top, player1_initial_speed_horizontal, player1_initial_speed_vertical, paddle_height, paddle_width, player1_colour, paddle_bound_x, paddle_bound_y)
-player2 = game_classes.Player(player2_initial_left, player2_initial_top, player2_initial_speed_horizontal, player2_initial_speed_vertical, paddle_height, paddle_width, player2_colour, paddle_bound_x, paddle_bound_y)
+ai = game_classes.Player(player1_initial_left, player1_initial_top, player1_initial_speed_horizontal, player1_initial_speed_vertical, paddle_height, paddle_width, player1_colour, paddle_bound_x, paddle_bound_y)
+bot = game_classes.Player(player2_initial_left, player2_initial_top, player2_initial_speed_horizontal, player2_initial_speed_vertical, paddle_height, paddle_width, player2_colour, paddle_bound_x, paddle_bound_y)
 ball = game_classes.ball(ball_initial_left, ball_initial_top, get_ball_initial_speed()[0], get_ball_initial_speed()[1], ball_width, ball_height, ball_bound_x, ball_bound_y, ball_colour)
 
 READY_TIME = 1500 #ms #the amount of time inbetween when the game is reset and when the game starts
 PAUSE_TIME = 750 #ms #the amount of time inbetween when a point is scored and when the game resets
+
+# the number of points it takes to win the game
+WINNING_SCORE = 5
 
 #for the score
 player1_score_position = (window_width / 3, window_height / 6)
@@ -86,13 +89,18 @@ player2_score_position = (window_width / 3 * 2, window_height / 6)
 score_font_size = int(window_height / 5)
 score_font = pygame.font.SysFont('Consolas', score_font_size, True, False)
 
+# this value decides after how many frames the bot moves
+# ex: 5 == moves every 5th frame
+every_nth_frame = 6
+frame_counter = 0 # to count every_nth_frame from
+
 #keep viewport window open if game is running
 while (window_run_status):
 
-    player1.position = (player1_initial_left,player1_initial_top)
-    player1.speed = (0,0)
-    player2.position = (player2_initial_left, player2_initial_top)
-    player2.speed = player1.speed
+    ai.position = (player1_initial_left,player1_initial_top)
+    ai.speed = (0,0)
+    bot.position = (player2_initial_left, player2_initial_top)
+    bot.speed = ai.speed
     ball.position = (ball_initial_left, ball_initial_top)
     ball.speed = get_ball_initial_speed()
 
@@ -100,16 +108,16 @@ while (window_run_status):
     game_run = True
 
     #initialise game
-    player1.update()
-    player2.update()
+    ai.update()
+    bot.update()
     ball.update()
     window.fill(background_colour)
-    player1.draw(window)
-    player2.draw(window)
+    ai.draw(window)
+    bot.draw(window)
     ball.draw(window)
 
-    player1_score_surface = score_font.render(str(player1.score), False, WHITE)
-    player2_score_surface = score_font.render(str(player2.score), False, WHITE)
+    player1_score_surface = score_font.render(str(ai.score), False, WHITE)
+    player2_score_surface = score_font.render(str(bot.score), False, WHITE)
     window.blit(player1_score_surface, player1_score_position)
     window.blit(player2_score_surface, player2_score_position)
 
@@ -124,68 +132,62 @@ while (window_run_status):
                 window_run_status = False
 
         #ball collision with wall
-        if ball.position[0] <= ball.bounds_x[0] or ball.position[0] >= ball.bounds_x[1]:
+        if ((ball.position[0] <= ball.bounds_x[0]) or (ball.position[0] >= ball.bounds_x[1])):
             ball.collide_along_x()
             ball.stop()
 
             if ball.position[0] <= ball.bounds_x[0]:
-                player2.score += 1
+                bot.score += 1
             else:
-                player1.score += 1
+                ai.score += 1
             
             game_run = False #Tells the round to stop and restart when a point is scored
 
-        #controls
+        # controls
         keys = pygame.key.get_pressed()
-        #joint controls between player1 and player2
-        if keys[pygame.K_w] and keys[pygame.K_UP]:
-            player1.move_up()
-            player2.move_up()
-        elif keys[pygame.K_s] and keys[pygame.K_DOWN]:
-            player1.move_down()
-            player2.move_down()
-        elif keys[pygame.K_w] and keys[pygame.K_DOWN]:
-            player1.move_up()
-            player2.move_down()
-        elif keys[pygame.K_s] and keys[pygame.K_UP]:
-            player1.move_down()
-            player2.move_up()
-        #player1 sole controls
-        elif keys[pygame.K_w]:
-            player1.move_up()
+        # ai control
+        if keys[pygame.K_w]:
+            ai.move_up()
         elif keys[pygame.K_s]:
-            player1.move_down()
-        #player2 sole controls
-        elif keys[pygame.K_UP]:
-            player2.move_up()
-        elif keys[pygame.K_DOWN]:
-            player2.move_down()
-        #quit control
-        elif keys[pygame.K_ESCAPE]:
+            ai.move_down()
+
+
+        # bot automated movement
+        frame_counter += 1
+        if frame_counter % every_nth_frame == 0:
+            if ball.position[1] < bot.position[1]:
+                bot.move_up()
+            elif ball.position[1] > bot.position[1]:
+                bot.move_down()
+
+
+        # quit control
+        if keys[pygame.K_ESCAPE]:
             game_run = False
             window_run_status = False
 
+        # ball collision against floor and ceiling
         if ball.position[1] < 0 or ball.position[1] > window_height:
             ball.collide_along_y()
 
         #ball collision with paddles
-        if ball.hitbox.colliderect(player1.hitbox):
+        if ball.hitbox.colliderect(ai.hitbox):
             ball.paddle_collide()
-        elif ball.hitbox.colliderect(player2.hitbox):
+        elif ball.hitbox.colliderect(bot.hitbox):
             ball.paddle_collide()
 
 
         #update sprites
-        player1.update()
-        player2.update()
+        ai.update()
+        bot.update()
         ball.update()
 
         #clear the window
         window.fill(background_colour)
 
         #draw sprites
-        player1.draw(window)
-        player2.draw(window)
+        ai.draw(window)
+        bot.draw(window)
         ball.draw(window)
 
         #draw score
@@ -194,6 +196,8 @@ while (window_run_status):
         
         #update the display
         pygame.display.update()
+
+        # end game when someone reaches a certain amount of points
     
     pygame.time.wait(PAUSE_TIME)
 
