@@ -19,11 +19,12 @@ window_run_status = True
 window = pygame.display.set_mode((window_width, window_height))
 pygame.display.set_caption(window_title)
 
-WHITE = (255,255,255)
-RED = (255,0,0)
-BLUE = (0,255,255)
+WHITE = (255, 255, 255)
+ORANGE = (255, 166, 77)
+RED = (255, 0, 0)
+BLUE = (0, 255, 255)
 
-background_colour = (0,0,0)
+background_colour = (0, 0, 0)
 
 player1_colour = WHITE
 player2_colour = BLUE
@@ -83,9 +84,11 @@ PAUSE_TIME = 750 #ms #the amount of time inbetween when a point is scored and wh
 # the number of points it takes to win the game
 WINNING_SCORE = 5
 
-#for the score
+# for the score
 player1_score_position = (window_width / 3, window_height / 6)
+player1_score_colour = WHITE
 player2_score_position = (window_width / 3 * 2, window_height / 6)
+player2_score_colour = WHITE
 score_font_size = int(window_height / 5)
 score_font = pygame.font.SysFont('Consolas', score_font_size, True, False)
 
@@ -116,8 +119,8 @@ while (window_run_status):
     bot.draw(window)
     ball.draw(window)
 
-    player1_score_surface = score_font.render(str(ai.score), False, WHITE)
-    player2_score_surface = score_font.render(str(bot.score), False, WHITE)
+    player1_score_surface = score_font.render(str(ai.score), False, player1_score_colour)
+    player2_score_surface = score_font.render(str(bot.score), False, player2_score_colour)
     window.blit(player1_score_surface, player1_score_position)
     window.blit(player2_score_surface, player2_score_position)
 
@@ -198,7 +201,39 @@ while (window_run_status):
         pygame.display.update()
 
         # end game when someone reaches a certain amount of points
+        if ai.score == WINNING_SCORE - 1:
+            player1_score_colour = ORANGE
+        if bot.score == WINNING_SCORE - 1:
+            player2_score_colour = ORANGE
+        
+        if ai.score >= WINNING_SCORE or bot.score >= WINNING_SCORE:
+            break
+    if ai.score >= WINNING_SCORE or bot.score >= WINNING_SCORE:
+            break
     
+# create the end-game pause when someone wins by reaching WINNING_SCORE
+if ai.score >= WINNING_SCORE or bot.score >= WINNING_SCORE:
+    if ai.score >= WINNING_SCORE:
+        player1_score_colour = RED
+    elif bot.score >= WINNING_SCORE:
+        player2_score_colour = RED
+
+    # update the game screen one last time before exiting
+    player1_score_surface = score_font.render(str(ai.score), False, player1_score_colour)
+    player2_score_surface = score_font.render(str(bot.score), False, player2_score_colour)
+    window.blit(player1_score_surface, player1_score_position)
+    window.blit(player2_score_surface, player2_score_position)
+    ai.update()
+    bot.update()
+    ball.update()
+    window.fill(background_colour)
+    ai.draw(window)
+    bot.draw(window)
+    ball.draw(window)
+    window.blit(player1_score_surface, player1_score_position)
+    window.blit(player2_score_surface, player2_score_position)
+    pygame.display.update()
+    pygame.display.update()
     pygame.time.wait(PAUSE_TIME)
 
 pygame.quit()
